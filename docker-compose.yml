@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  # Parseable log analytics server
+  parseable:
+    image: parseable/parseable:v2.4.1
+    container_name: parseable
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - P_FS_DIR=/parseable/data
+      - P_STAGING_DIR=/parseable/staging
+      - P_USERNAME=${PARSEABLE_USERNAME:-admin}
+      - P_PASSWORD=${PARSEABLE_PASSWORD:-admin}
+    volumes:
+      - parseable_data:/parseable/data
+      - parseable_staging:/parseable/staging
+    command: ["parseable", "local-store"]
+
+  # n8n with comprehensive OpenTelemetry observability
+  n8n:
+    build:
+      context: .
+      dockerfile: Dockerfile.working
+    container_name: n8n-comprehensive
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Parseable/OpenTelemetry configuration
+      - PARSEABLE_URL=http://parseable:8000
+      - PARSEABLE_USERNAME=${PARSEABLE_USERNAME:-admin}
+      - PARSEABLE_PASSWORD=${PARSEABLE_PASSWORD:-admin}
+      - OTEL_SERVICE_NAME=n8n-comprehensive
+      - NODE_ENV=production
+      
+      # n8n configuration
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678/}
+      
+      # Database configuration
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_DATABASE=n8n
+      - DB_POSTGRESDB_USER=n8n
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      
+      # Enable task runners for better workflow execution visibility
+      - N8N_RUNNERS_ENABLED=true
+      
+      # n8n Logging configuration (Winston → Parseable)
+      - N8N_LOG_LEVEL=info
+      - N8N_LOG_OUTPUT=console
+      - N8N_LOG_FILE_LOCATION=/home/node/.n8n/logs/n8n.log
+      - N8N_WINSTON_LOGGING=true
+      
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - postgres
+      - parseable
+    
+  # PostgreSQL database
+  postgres:
+    image: postgres:15-alpine
+    container_name: n8n-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=n8n
+      - POSTGRES_USER=n8n
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  n8n_data:
+    driver: local
+  postgres_data:
+    driver: local
+  parseable_data:
+    driver: local
+  parseable_staging:
+    driver: local

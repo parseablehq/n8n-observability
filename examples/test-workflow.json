@@ -1,0 +1,251 @@
+{
+  "name": "Observability Test Workflow",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "f1b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        720,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "message",
+              "value": "Hello from n8n observability test",
+              "type": "string"
+            },
+            {
+              "id": "f2e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "timestamp",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            },
+            {
+              "id": "f3e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "workflow_id",
+              "value": "observability-test",
+              "type": "string"
+            },
+            {
+              "id": "f4e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "execution_count",
+              "value": "={{ Math.floor(Math.random() * 1000) }}",
+              "type": "number"
+            }
+          ]
+        }
+      },
+      "id": "f2b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "Set Test Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        940,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simulate some data processing\nconst items = $input.all();\nconst results = [];\n\nfor (let i = 0; i < items.length; i++) {\n  const item = items[i].json;\n  \n  // Simulate processing time\n  const processingStart = Date.now();\n  \n  // Some fake processing\n  let sum = 0;\n  for (let j = 0; j < 10000; j++) {\n    sum += Math.random();\n  }\n  \n  const processingTime = Date.now() - processingStart;\n  \n  results.push({\n    ...item,\n    processed: true,\n    processing_time_ms: processingTime,\n    random_sum: Math.round(sum),\n    processed_at: new Date().toISOString(),\n    item_index: i\n  });\n}\n\n// Log some metrics\nconsole.log(`Processed ${results.length} items in ${Date.now() - $executionId} ms`);\n\nreturn results;"
+      },
+      "id": "f3b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "Process Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1160,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://httpbin.org/post",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "f4b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "Send to HTTP Endpoint",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1380,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "f5e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "leftValue": "={{ $json.execution_count }}",
+              "rightValue": 500,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "f5b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "Check High Execution Count",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f6e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "alert_level",
+              "value": "HIGH",
+              "type": "string"
+            },
+            {
+              "id": "f7e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "message",
+              "value": "High execution count detected: {{ $json.execution_count }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "f6b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "Create High Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1820,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f8e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "alert_level",
+              "value": "NORMAL",
+              "type": "string"
+            },
+            {
+              "id": "f9e1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+              "name": "message",
+              "value": "Normal execution count: {{ $json.execution_count }}",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "f7b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+      "name": "Create Normal Alert",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [
+        1820,
+        560
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Set Test Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Test Data": {
+      "main": [
+        [
+          {
+            "node": "Process Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Data": {
+      "main": [
+        [
+          {
+            "node": "Send to HTTP Endpoint",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to HTTP Endpoint": {
+      "main": [
+        [
+          {
+            "node": "Check High Execution Count",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check High Execution Count": {
+      "main": [
+        [
+          {
+            "node": "Create High Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Normal Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "f0000000-0000-0000-0000-000000000001",
+  "id": "f0b1c1b0-8b1c-4b1c-9b1c-1b1c1b1c1b1c",
+  "meta": {
+    "templateCredsSetupCompleted": true
+  },
+  "tags": []
+}
