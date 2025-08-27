@@ -1,6 +1,6 @@
 # n8n Observability with Parseable
 
-This repository provides a complete solution for monitoring n8n workflow automation with comprehensive observability using [Parseable](https://parseable.io/) - an open-source, cloud-native log analytics platform.
+This repository provides a complete solution for monitoring n8n workflow automation with comprehensive observability using [Parseable](https://parseable.com) - an open-source, unified observability platform.
 
 ## 🎯 What This Provides
 
@@ -287,7 +287,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## 🙏 Acknowledgments
 
 - [n8n](https://n8n.io/) - Workflow automation platform
-- [Parseable](https://parseable.io/) - Log analytics platform  
+- [Parseable](https://parseable.com/) - Log analytics platform  
 - [OpenTelemetry](https://opentelemetry.io/) - Observability framework
 - [Winston](https://github.com/winstonjs/winston) - Logging library
 
@@ -295,7 +295,7 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 - **Issues**: [GitHub Issues](https://github.com/parseablehq/n8n-observability/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/parseablehq/n8n-observability/discussions)
-- **Parseable Community**: [Discord](https://discord.gg/parseable)
+- **Parseable Community**: [Discord](https://logg.ing/community)
 
 ---
 
